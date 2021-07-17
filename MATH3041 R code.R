@@ -1,5 +1,6 @@
+# Testing
 setwd("D:/UNSW/2021 T2/MATH3041/Assignment/Group Assignment")
-#Test
+
 seasonal = read.table("seasonal_data.txt", header = T)
 # attach(seasonal)
 seasonal$summer = as.factor(seasonal$summer)
