@@ -19,12 +19,16 @@ plot(nthqrt, concentration, type="l", xlab="Time", ylab="Concentrations")
 xmax = 30 #Maximum time on Plot
 
 plot(nthqrt[summer=="1"], log(concentration[summer=="1"]), type="l", 
-     xlab="Time", ylab=" Log Concentration", xlim = c(0, xmax), 
+     xlab="Time", ylab=" Log Concentration", xlim = c(0, xmax), col="black", 
      ylim = c(log(concentration[1]), log(concentration[4*xmax])))
-lines(nthqrt[autumn=="1"], log(concentration[autumn=="1"]), col=2)
-lines(nthqrt[winter=="1"], log(concentration[winter=="1"]), col=3)
+lines(nthqrt[autumn=="1"], log(concentration[autumn=="1"]), col="red")
+lines(nthqrt[winter=="1"], log(concentration[winter=="1"]), col="green")
 lines(nthqrt[winter=="0" & summer =="0" & autumn == "0"], 
-      log(concentration[winter=="0" & summer =="0" & autumn == "0"]), col=4)
+      log(concentration[winter=="0" & summer =="0" & autumn == "0"]),
+      col="blue")
+legend("bottomright" ,legend=c("Summer", "Autumn", "Winter", "Spring"),
+       col=c("black", "red", "green", "blue"), lty=1:2, cex=0.8)
+
 
 model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Hawaii_Seasonal)
 summary(model)
@@ -76,3 +80,5 @@ col5 = c(0,0,0,0,0,0,1,1)
 x = cbind(col0, col1, col2, col3, col4, col5)
 y = c(concentration)
 solve(t(x) %*% x) %*% t(x) %*% y
+
+
