@@ -1,7 +1,6 @@
-# Testing2
-setwd("D:/UNSW/2021 T2/MATH3041/Assignment/Group Assignment")
-
+# Testing
 seasonal = read.table("seasonal_data.txt", header = T)
+
 # attach(seasonal)
 seasonal$summer = as.factor(seasonal$summer)
 seasonal$autumn = as.factor(seasonal$autumn)
@@ -43,6 +42,7 @@ ggplot(seasonal, aes(nthqrt, concentration)) +
 
 
 # analysis
+set.seed(5)
 index = sample(1:252, size=150)
 seasonal1 = seasonal[index,]
 seasonal2 = seasonal[-index,]
@@ -56,31 +56,14 @@ seasonal1.li = lm(concentration~nthqrt+summer+autumn+winter, data = seasonal1)
 seasonal1.li.pr = predict(seasonal1.li, newdata = seasonal2)
 
 # mean square error?
-sqrt(mean((seasonal2$concentration-seasonal1.lm.pr)^2)) 
 
-# sqrt(mean((seasonal2$concentration-seasonal1.li.pr)^2)) # 3.95
+sqrt(mean((seasonal2$concentration-seasonal1.lm.pr)^2)) #<- Quadratic is better
+
+sqrt(mean((seasonal2$concentration-seasonal1.li.pr)^2)) # 3.95
 
 
-# OLS
-# come up with the matirx
-x = model.matrix(model)
 
-## make my response y: dataframe(i.e. risk)$variable(i.e. risk)
-y = concentration
-solve(t(x) %*% x) %*% t(x) %*% y
-
-col0 = rep(c(1), each=252)
-col1 = seasonal$nthqrt
-col2 = seasonal$nthqrtsqr
-col3 = seasonal$summer
-col4 = seasonal$autumn
-col5 = seasonal$winter
-response = seasonal$concentration
-
-M_temp = cbind(col0, col1, col2, col3, col4, col5)
-solve(t(M_temp) %*% M_temp) %*% t(M_temp) %*% response
-
-# Estimation of coefficients
+# Estimation of coefficients <- To be fixed
 col0 = rep(c(1), each=8)
 col1 = c(24,43,13.25,37.25,46.5,51.5,17.75,48.75)
 col2 = c(576,1849,175.5625,1387.563,2162.25,2652.25,315.0625,2376.563)
