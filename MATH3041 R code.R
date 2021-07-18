@@ -1,4 +1,4 @@
-# Testing
+# Testing2
 setwd("D:/UNSW/2021 T2/MATH3041/Assignment/Group Assignment")
 
 seasonal = read.table("seasonal_data.txt", header = T)
