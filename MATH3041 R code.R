@@ -1,77 +1,78 @@
-# Testing
-seasonal = read.table("seasonal_data.txt", header = T)
+# install.packages("ggplot2")
+library(ggplot2)
+set.seed(5)
+
+# Hawaii Data
+Hawaii_Seasonal = read.table("seasonal_data.txt", header = T)
 
 # attach(seasonal)
-seasonal$summer = as.factor(seasonal$summer)
-seasonal$autumn = as.factor(seasonal$autumn)
-seasonal$winter = as.factor(seasonal$winter)
-seasonal$nthqrtsqr = (seasonal$nthqrt)^2
-attach(seasonal)
+Hawaii_Seasonal$summer = as.factor(Hawaii_Seasonal$summer)
+Hawaii_Seasonal$autumn = as.factor(Hawaii_Seasonal$autumn)
+Hawaii_Seasonal$winter = as.factor(Hawaii_Seasonal$winter)
+Hawaii_Seasonal$nthqrtsqr = (Hawaii_Seasonal$nthqrt)^2
+attach(Hawaii_Seasonal)
 
-# summer = as.factor(summer)
-# autumn = as.factor(autumn)
-# winter = as.factor(winter)
 
 plot(nthqrt, concentration, type="l", xlab="Time", ylab="Concentrations")
 
+#Seasonal plots (LOG)
+xmax = 30 #Maximum time on Plot
 
-plot(seasonal)
+plot(nthqrt[summer=="1"], log(concentration[summer=="1"]), type="l", 
+     xlab="Time", ylab=" Log Concentration", xlim = c(0, xmax), 
+     ylim = c(log(concentration[1]), log(concentration[4*xmax])))
+lines(nthqrt[autumn=="1"], log(concentration[autumn=="1"]), col=2)
+lines(nthqrt[winter=="1"], log(concentration[winter=="1"]), col=3)
+lines(nthqrt[winter=="0" & summer =="0" & autumn == "0"], 
+      log(concentration[winter=="0" & summer =="0" & autumn == "0"]), col=4)
 
-plot(nthqrt[summer=="1"], concentration[summer=="1"], type="l", xlab="Time", ylab="Concentration")
-lines(nthqrt[autumn=="1"], concentration[autumn=="1"], col=2)
-lines(nthqrt[winter=="1"], concentration[winter=="1"], col=3)
-
-model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = seasonal)
+model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Hawaii_Seasonal)
 summary(model)
 
-predct_response = predict(model, newdata = seasonal)
+predct_response = predict(model, newdata = Hawaii_Seasonal)
 
 lines(nthqrt, predct_response, col=2)
 
-# model2 = lm(log(concentration)~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = seasonal)
-# summary(model2)
-
-
-
-# install.packages("ggplot2")
-library(ggplot2)
-
-ggplot(seasonal, aes(nthqrt, concentration)) +
+ggplot(Hawaii_Seasonal, aes(nthqrt, concentration)) +
   geom_line() +
   labs(x="Time", y="Carbon Dioxide Concentration")
 
 
 # analysis
-set.seed(5)
 index = sample(1:252, size=150)
-seasonal1 = seasonal[index,]
-seasonal2 = seasonal[-index,]
-attach(seasonal1)
+Hawaii_Seasonal1 = Hawaii_Seasonal[index,]
+Hawaii_Seasonal2 = Hawaii_Seasonal[-index,]
+detach(Hawaii_Seasonal)
+attach(Hawaii_Seasonal1)
 
 # linear trend does not work well
-seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = seasonal1)
-seasonal1.lm.pr = predict(seasonal1.lm, newdata = seasonal2)
+#Quadratic
+Hawaii_Seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Hawaii_Seasonal1)
+Hawaii_Seasonal1.lm.pr = predict(Hawaii_Seasonal1.lm, newdata = Hawaii_Seasonal2)
 
-seasonal1.li = lm(concentration~nthqrt+summer+autumn+winter, data = seasonal1)
-seasonal1.li.pr = predict(seasonal1.li, newdata = seasonal2)
+#Non Quadratic
+Hawaii_Seasonal1.li = lm(concentration~nthqrt+summer+autumn+winter, data = Hawaii_Seasonal1)
+Hawaii_Seasonal1.li.pr = predict(Hawaii_Seasonal1.li, newdata = Hawaii_Seasonal2)
 
 # mean square error?
+#quadratic
+sqrt(mean((Hawaii_Seasonal2$concentration-Hawaii_Seasonal1.lm.pr)^2))
+#Linear
+sqrt(mean((Hawaii_Seasonal2$concentration-Hawaii_Seasonal1.li.pr)^2))
 
-sqrt(mean((seasonal2$concentration-seasonal1.lm.pr)^2)) #<- Quadratic is better
-
-sqrt(mean((seasonal2$concentration-seasonal1.li.pr)^2)) # 3.95
 
 
-
-# Estimation of coefficients <- To be fixed
+# Estimation of coefficients
+detach(Hawaii_Seasonal1)
+Hawaii_Seasonal_8sample = Hawaii_Seasonal[sample(nrow(Hawaii_Seasonal), 8), ]
+attach(Hawaii_Seasonal_8sample)
 col0 = rep(c(1), each=8)
-col1 = c(24,43,13.25,37.25,46.5,51.5,17.75,48.75)
-col2 = c(576,1849,175.5625,1387.563,2162.25,2652.25,315.0625,2376.563)
+col1 = c(nthqrt)
+col2 = c(nthqrtsqr)
 col3 = c(0,0,1,1,0,0,0,0)
 col4 = c(0,0,0,0,1,1,0,0)
 col5 = c(0,0,0,0,0,0,1,1)
 
 x = cbind(col0, col1, col2, col3, col4, col5)
-y = c(343.8367,373.4033,327.12,361.48,375.13,385.2733,331.64,383.08)
-
+y = c(concentration)
 solve(t(x) %*% x) %*% t(x) %*% y
