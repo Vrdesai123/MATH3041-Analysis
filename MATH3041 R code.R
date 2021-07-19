@@ -2,18 +2,21 @@
 library(ggplot2)
 set.seed(5)
 
-############ Hawaii Section #################
+################## Hawaii Section #######################
 
 # Hawaii Data
-Hawaii_Seasonal = read.table("seasonal_data.txt", header = T)
+Hawaii_Seasonal = read.table("hawaii_seasonal_data.txt", header = T)
 Hawaii_Annual = read.csv("co2_annmean_mlo.csv", skip = 55, header = T)
-# Hawaii_monthly =
 
+# MATH2831 lecture notes indicates that we don't need
+# to change the type of categorical to factor in R when
+# we fit linear model.
 
-Hawaii_Seasonal$summer = as.factor(Hawaii_Seasonal$summer)
-Hawaii_Seasonal$autumn = as.factor(Hawaii_Seasonal$autumn)
-Hawaii_Seasonal$winter = as.factor(Hawaii_Seasonal$winter)
-Hawaii_Seasonal$nthqrtsqr = (Hawaii_Seasonal$nthqrt)^2
+# Hawaii_Seasonal$summer = as.factor(Hawaii_Seasonal$summer)
+# Hawaii_Seasonal$autumn = as.factor(Hawaii_Seasonal$autumn)
+# Hawaii_Seasonal$winter = as.factor(Hawaii_Seasonal$winter)
+# Hawaii_Seasonal$nthqrtsqr = (Hawaii_Seasonal$nthqrt)^2
+
 #Decmial year
 Hawaii_Seasonal$yeardec = min(Hawaii_Seasonal$year)+Hawaii_Seasonal$nthqrt
 attach(Hawaii_Seasonal)
@@ -99,7 +102,8 @@ detach(Hawaii_Seasonal_8sample)
 
 ##### Long Term Model #####
 
-############ Australia Section #################
+
+####################### Australia Section #######################
 #Australia Data
 Australia_Seasonal = read.table("australia_seasonal_data.txt", header = T)
 
@@ -190,3 +194,91 @@ x = cbind(col0, col1, col2, col3, col4, col5)
 y = c(concentration)
 solve(t(x) %*% x) %*% t(x) %*% y
 detach(Australia_Seasonal_8sample)
+
+
+################## Global Section #######################
+Global_Seasonal = read.table("combined_seasonal_data.txt", header = T)
+#attach(global_seasonal)
+
+
+global_model = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Global_Seasonal)
+# global_model$fitted.values
+summary(global_model)
+
+# diagnostic plot
+par(mfrow=c(2,2))
+plot(global_model) 
+par(mfrow=c(1,1))
+# Residual plot shows that linearity assumption is hold?
+# Normal Q-Q plot shows that normality assumption is hold?
+# Scale-Location shows that no.1,46,52 are potentially considered as outliers
+
+
+# predict_response = predict(global_model, newdata = global_seasonal)
+# lines(global_seasonal$nthqrt, predict_response, col=2)
+
+# plot concentrations against nthqrt
+# Global data
+plot(Global_Seasonal$nthqrt,Global_Seasonal$concentration, type = "l", xlab = "Time in Quarter", ylab = "Carbon Dioxide Concentration")
+# Hawaii seasonal data
+lines(Hawaii_Seasonal$nthqrt, Hawaii_Seasonal$concentration, col = 2)
+# Australia seasonal data
+lines(Australia_Seasonal$nthqrt, Australia_Seasonal$concentration, col = 3)
+
+# Result
+# Distribution of global data is in the middle of Hawaii and Australia
+
+# PRESS Statistic (smaller is better)
+pr = residuals(global_model)/(1-hatvalues(global_model))
+PRESS = sum(pr^2) # PRESS = 63.60526
+
+
+# CVC: select smallest one
+# install.packages("cvTools")
+library(cvTools)
+CVC = cvFit(global_model, data = Global_Seasonal, y=Global_Seasonal$concentration, K=5, seed=1)
+CVC$cv # 0.6146834
+# We can do the CVC test for different model and then do the selection
+
+
+# Checking for influential observation, interpretation is in MATH2831 Wk8 Slide.33
+influence.measures(global_model) # no.1,3,4,46,47,52,.... (have a high leverage)
+
+# if we refit the model after the removal of influential 
+# observations (haven't removed all the influential observations since full
+# results cannot display on the screen)
+global_model2 = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Global_Seasonal[-c(1,3,4,46,47,52),])
+summary(global_model2)
+
+# Compare the fitted value of nthqrt = 21.25
+newdata = data.frame(nthqrt = 21.25, spring = 0, summer = 1, autumn = 0)
+
+# model with full observations
+predict(global_model, newdata, interval = "confidence")
+predict(global_model, newdata, interval = "prediction")
+
+# model with some influential observations removed
+predict(global_model2, newdata, interval = "confidence")
+predict(global_model2, newdata, interval = "prediction")
+
+# Result: both the CI for the mean response and the PI have reduced in size,
+# but not much. This is probably because the goodness-of-fit of the orginial
+# model has already been super high.
+
+# diagnostic plot
+par(mfrow=c(2,2))
+plot(global_model2)
+par(mfrow=c(1,1))
+
+# Analysis
+index = sample(1:176, 88)
+global_seasonal1 = Global_Seasonal[index,]
+global_seasonal2 = Global_Seasonal[-index,]
+attach(global_seasonal1)
+
+global_seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = global_seasonal1)
+global_seasonal1.lm.pr = predict(global_seasonal1.lm, newdata = global_seasonal2)
+
+# mean square error?
+sqrt(mean((global_seasonal2$concentration-global_seasonal1.lm.pr)^2))  # 0.6236509
+
