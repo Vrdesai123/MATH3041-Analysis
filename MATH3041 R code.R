@@ -13,10 +13,7 @@ Hawaii_Annual = read.csv("co2_annmean_mlo.csv", skip = 55, header = T)
 # to change the type of categorical to factor in R when
 # we fit linear model.
 
-# Hawaii_Seasonal$summer = as.factor(Hawaii_Seasonal$summer)
-# Hawaii_Seasonal$autumn = as.factor(Hawaii_Seasonal$autumn)
-# Hawaii_Seasonal$winter = as.factor(Hawaii_Seasonal$winter)
-# Hawaii_Seasonal$nthqrtsqr = (Hawaii_Seasonal$nthqrt)^2
+Hawaii_Seasonal$nthqrtsqr = (Hawaii_Seasonal$nthqrt)^2
 
 #Decmial year
 Hawaii_Seasonal$yeardec = min(Hawaii_Seasonal$year)+Hawaii_Seasonal$nthqrt
@@ -33,15 +30,13 @@ plot(yeardec[summer=="1"], log(concentration[summer=="1"]),
 
 lines(yeardec[autumn=="1"], log(concentration[autumn=="1"]), col="red")
 lines(yeardec[winter=="1"], log(concentration[winter=="1"]), col="green")
-lines(yeardec[winter=="0" & summer =="0" & autumn == "0"], 
-      log(concentration[winter=="0" & summer =="0" & autumn == "0"]),
-      col="blue")
+lines(yeardec[spring=="1"], log(concentration[spring=="1"]), col="blue")
 legend("bottomright" ,legend=c("Summer", "Autumn", "Winter", "Spring"),
        col=c("black", "red", "green", "blue"), lty=1:2, cex=0.8)
 
 ##### Seasonal Model #####
 
-model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Hawaii_Seasonal)
+model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, data = Hawaii_Seasonal)
 summary(model)
 
 predct_response = predict(model, newdata = Hawaii_Seasonal)
@@ -70,11 +65,11 @@ attach(Hawaii_Seasonal1)
 
 # linear trend does not work well
 #Quadratic
-Hawaii_Seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Hawaii_Seasonal1)
+Hawaii_Seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, data = Hawaii_Seasonal1)
 Hawaii_Seasonal1.lm.pr = predict(Hawaii_Seasonal1.lm, newdata = Hawaii_Seasonal2)
 
 #Non Quadratic
-Hawaii_Seasonal1.li = lm(concentration~nthqrt+summer+autumn+winter, data = Hawaii_Seasonal1)
+Hawaii_Seasonal1.li = lm(concentration~nthqrt+summer+autumn+spring, data = Hawaii_Seasonal1)
 Hawaii_Seasonal1.li.pr = predict(Hawaii_Seasonal1.li, newdata = Hawaii_Seasonal2)
 
 # mean square error?
@@ -101,16 +96,12 @@ y = c(concentration)
 solve(t(x) %*% x) %*% t(x) %*% y
 detach(Hawaii_Seasonal_8sample)
 
-##### Long Term Model #####
-
 
 ####################### Australia Section #######################
 #Australia Data
 Australia_Seasonal = read.table("australia_seasonal_data.txt", header = T)
 
-Australia_Seasonal$summer = as.factor(Australia_Seasonal$summer)
-Australia_Seasonal$autumn = as.factor(Australia_Seasonal$autumn)
-Australia_Seasonal$winter = as.factor(Australia_Seasonal$winter)
+
 Australia_Seasonal$nthqrtsqr = (Australia_Seasonal$nthqrt)^2
 #Decmial year
 Australia_Seasonal$yeardec = min(Australia_Seasonal$year)+Australia_Seasonal$nthqrt
@@ -128,14 +119,14 @@ plot(yeardec[summer=="1"], log(concentration[summer=="1"]),
 
 lines(yeardec[autumn=="1"], log(concentration[autumn=="1"]), col="red")
 lines(yeardec[winter=="1"], log(concentration[winter=="1"]), col="green")
-lines(yeardec[winter=="0" & summer =="0" & autumn == "0"], 
-      log(concentration[winter=="0" & summer =="0" & autumn == "0"]),
+lines(yeardec[spring =="1"], 
+      log(concentration[spring =="1"]),
       col="blue")
 legend("bottomright" ,legend=c("Summer", "Autumn", "Winter", "Spring"),
        col=c("black", "red", "green", "blue"), lty=1:2, cex=0.8)
 
 ##### Seasonal Model #####
-model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, 
+model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, 
            data = Australia_Seasonal)
 summary(model)
 
@@ -165,11 +156,11 @@ attach(Australia_Seasonal1)
 
 # linear trend does not work well
 #Quadratic
-Australia_Seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Australia_Seasonal1)
+Australia_Seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, data = Australia_Seasonal1)
 Australia_Seasonal1.lm.pr = predict(Australia_Seasonal1.lm, newdata = Australia_Seasonal2)
 
 #Non Quadratic
-Australia_Seasonal1.li = lm(concentration~nthqrt+summer+autumn+winter, data = Australia_Seasonal1)
+Australia_Seasonal1.li = lm(concentration~nthqrt+summer+autumn+spring, data = Australia_Seasonal1)
 Australia_Seasonal1.li.pr = predict(Australia_Seasonal1.li, newdata = Australia_Seasonal2)
 
 # mean square error?
@@ -195,6 +186,7 @@ x = cbind(col0, col1, col2, col3, col4, col5)
 y = c(concentration)
 solve(t(x) %*% x) %*% t(x) %*% y
 detach(Australia_Seasonal_8sample)
+
 
 
 ################## Global Section #######################
@@ -282,4 +274,5 @@ global_seasonal1.lm.pr = predict(global_seasonal1.lm, newdata = global_seasonal2
 
 # mean square error?
 sqrt(mean((global_seasonal2$concentration-global_seasonal1.lm.pr)^2))  # 0.6236509
+
 
