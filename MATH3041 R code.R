@@ -36,10 +36,10 @@ legend("bottomright" ,legend=c("Summer", "Autumn", "Winter", "Spring"),
 
 ##### Seasonal Model #####
 
-model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, data = Hawaii_Seasonal)
-summary(model)
+Hawaii_model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, data = Hawaii_Seasonal)
+summary(Hawaii_model)
 
-predct_response = predict(model, newdata = Hawaii_Seasonal)
+predct_response = predict(Hawaii_model, newdata = Hawaii_Seasonal)
 
 #Regular Plots, Add Legends
 plot(nthqrt, concentration, type="l", xlab="Time", ylab="Concentrations",
@@ -48,7 +48,7 @@ lines(nthqrt, predct_response, col=2)
 legend("topleft" ,legend=c("Actual", "Predicted"),
        col=c("black", "red"), lty=1:2, cex=0.8)
 legend("bottomright", bty="n", 
-       legend=paste("Adj R2 is", format(summary(model)$adj.r.squared, digits=4)))
+       legend=paste("Adj R2 is", format(summary(Hawaii_model)$adj.r.squared, digits=4)))
 
 ggplot(Hawaii_Seasonal, aes(yeardec, concentration)) +
   geom_line() +
@@ -126,11 +126,11 @@ legend("bottomright" ,legend=c("Summer", "Autumn", "Winter", "Spring"),
        col=c("black", "red", "green", "blue"), lty=1:2, cex=0.8)
 
 ##### Seasonal Model #####
-model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, 
+AUS_model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, 
            data = Australia_Seasonal)
-summary(model)
+summary(AUS_model)
 
-predct_response = predict(model, newdata = Australia_Seasonal)
+predct_response = predict(AUS_model, newdata = Australia_Seasonal)
 
 #Regular Plots, Add Legends
 plot(nthqrt, concentration, type="l", xlab="Time", ylab="CO2", 
@@ -139,7 +139,7 @@ lines(nthqrt, predct_response, col=2)
 legend("topleft" ,legend=c("Actual", "Predicted"),
        col=c("black", "red"), lty=1:2, cex=0.8)
 legend("bottomright", bty="n", 
-       legend=paste("Adj R2 is", format(summary(model)$adj.r.squared, digits=4)))
+       legend=paste("Adj R2 is", format(summary(AUS_model)$adj.r.squared, digits=4)))
 
 ggplot(Australia_Seasonal, aes(nthqrt, concentration)) +
   geom_line() +
@@ -274,5 +274,46 @@ global_seasonal1.lm.pr = predict(global_seasonal1.lm, newdata = global_seasonal2
 
 # mean square error?
 sqrt(mean((global_seasonal2$concentration-global_seasonal1.lm.pr)^2))  # 0.6236509
+detach(global_seasonal1)
 
+
+################## Long Term Model #######################
+#### Hawaii Data ####
+Hawaii_LT_Data = read.table("long_term_data.txt", header = T)
+attach(Hawaii_LT_Data)
+
+LT_model = lm(average~indicator+I(indicator^2)+
+                sin((pi/6)*indicator)+cos((pi/6)*indicator)
+              , data = Hawaii_LT_Data)
+summary(LT_model)
+
+#Fit Data
+predct_response_LT = predict(LT_model, newdata = Hawaii_LT_Data) 
+
+#Actual vs Predicted graph on Hawaii
+plot(indicator, average, type="l", xlab="Time", ylab="Concentrations",
+     main = "LT Actual vs Predicted")
+lines(indicator, predct_response_LT, col=2)
+legend("topleft" ,legend=c("Actual", "Predicted"),
+       col=c("black", "red"), lty=1:2, cex=0.8)
+legend("bottomright", bty="n", 
+       legend=paste("Adj R2 is", format(summary(LT_model)$adj.r.squared, digits=4)))
+detach(Hawaii_LT_Data)
+
+# Analysis
+index = sample(1:176, 88)
+Hawaii_LT_Data1 = Hawaii_LT_Data[index,]
+Hawaii_LT_Data2 = Hawaii_LT_Data[-index,]
+attach(Hawaii_LT_Data1)
+
+Hawaii_LT_Data1.lm = lm(average~indicator+I(indicator^2)+
+                          sin((pi/6)*indicator)+cos((pi/6)*indicator)
+                        , data = Hawaii_LT_Data1)
+Hawaii_LT_Data1.lm.pr = predict(Hawaii_LT_Data1.lm, newdata = Hawaii_LT_Data2)
+
+# mean square error #incorrect currently
+mse <- function(lmsum) 
+  mean(summary(global_seasonal1.lm)$residuals^2)
+
+detach(Hawaii_LT_Data1)
 
