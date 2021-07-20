@@ -1,5 +1,4 @@
 # install.packages("ggplot2")
-#11111
 library(ggplot2)
 set.seed(5)
 
@@ -263,18 +262,43 @@ par(mfrow=c(2,2))
 plot(global_model2)
 par(mfrow=c(1,1))
 
-# Analysis
-index = sample(1:176, 88)
-global_seasonal1 = Global_Seasonal[index,]
-global_seasonal2 = Global_Seasonal[-index,]
-attach(global_seasonal1)
 
-global_seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = global_seasonal1)
-global_seasonal1.lm.pr = predict(global_seasonal1.lm, newdata = global_seasonal2)
 
-# mean square error?
-sqrt(mean((global_seasonal2$concentration-global_seasonal1.lm.pr)^2))  # 0.6236509
-detach(global_seasonal1)
+# Analysis: Model Selection (linear, quadratic and exponential trend)
+linear_trend = lm(concentration~nthqrt+spring+summer+autumn, data = Global_Seasonal)
+quadratic_trend = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Global_Seasonal)
+exponential_trend = lm(log(concentration)~nthqrt+spring+summer+autumn, data = Global_Seasonal)
+
+linear.pr = residuals(linear_trend)/(1-hatvalues(linear_trend))
+press.li = sum(linear.pr^2) # 824.2134
+
+quadratic.pr = residuals(quadratic_trend)/(1-hatvalues(quadratic_trend))
+press.qua = sum(quadratic.pr^2) # 63.60526
+
+exp.pr = residuals(exponential_trend)/(1-hatvalues(exponential_trend))
+press.exp = sum(exp.pr^2) # 0.002999889  ->  probably something went wrong
+
+summary(exponential_trend) # R-squared is nearly 0.996  ->  too high, and make autumn insignificant
+summary(linear_trend)
+
+index = sample(1:176, size = 88)
+Global1 = Global_Seasonal[index,]
+Global2 = Global_Seasonal[-index,]
+attach(Global2)
+Global2$logconcentration = log(concentration)
+detach(Global2)
+attach(Global1)
+
+global1.qua = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Global1)
+global1.exp = lm(log(concentration)~nthqrt+spring+summer+autumn, data = Global1)
+
+global1.qua.pr = predict(global1.qua, newdata=Global2)
+global1.exp.pr = predict(global1.exp, newdata=Global2)
+
+sqrt(mean((Global2$concentration-global1.qua.pr)^2)) # 0.6325
+
+sqrt(mean((Global2$logconcentration-global1.exp.pr)^2)) # 0.0043  ->  DON'T UNDERSTAND
+
 
 
 ################## Long Term Model #######################
