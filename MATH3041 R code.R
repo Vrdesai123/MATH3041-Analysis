@@ -22,8 +22,8 @@ attach(Hawaii_Seasonal)
 xmax = 30 #Maximum time on Plot
 
 plot(yeardec[summer=="1"], log(concentration[summer=="1"]), 
-     main = "Seasonal CO2 Plot",
-     type="l", xlab="Time", ylab=" Log Concentration", 
+     main = "Hawaii Seasonal CO2 Plot",
+     type="l", xlab="Time (years)", ylab=" Log Concentration", 
      xlim = c(min(yeardec),min(yeardec) + xmax), col="black", 
      ylim = c(log(concentration[1]), log(concentration[4*xmax])))
 
@@ -41,8 +41,8 @@ summary(Hawaii_model)
 predct_response = predict(Hawaii_model, newdata = Hawaii_Seasonal)
 
 #Regular Plots, Add Legends
-plot(nthqrt, concentration, type="l", xlab="Time", ylab="Concentrations",
-     main = "Actual vs Predicted")
+plot(nthqrt, concentration, type="l", xlab="Time (years)", ylab="CO2 Concentration (ppm)",
+     main = "Hawaii Sesaonal Actual vs Predicted")
 lines(nthqrt, predct_response, col=2)
 legend("topleft" ,legend=c("Actual", "Predicted"),
        col=c("black", "red"), lty=1:2, cex=0.8)
@@ -52,7 +52,7 @@ legend("bottomright", bty="n",
 ggplot(Hawaii_Seasonal, aes(yeardec, concentration)) +
   geom_line() +
   ggtitle("Hawaii Carbon Dioxide Seasonal Trend ") +
-  labs(x="Time", y="Carbon Dioxide Concentration") #units
+  labs(x="Time", y="CO2 Concentration (ppm)") #units
 
 
 # analysis
@@ -111,7 +111,7 @@ attach(Australia_Seasonal)
 xmax = 20 #Maximum time on Plot
 
 plot(yeardec[summer=="1"], log(concentration[summer=="1"]), 
-     main = "Seasonal CO2 Plot",
+     main = "Australia Seasonal CO2 Plot",
      type="l", xlab="Time", ylab=" Log Concentration", 
      xlim = c(min(yeardec),min(yeardec) + xmax), col="black", 
      ylim = c(log(concentration[1]), log(concentration[4*xmax])))
@@ -131,9 +131,10 @@ summary(AUS_model)
 
 predct_response = predict(AUS_model, newdata = Australia_Seasonal)
 
-#Regular Plots, Add Legends
-plot(nthqrt, concentration, type="l", xlab="Time", ylab="CO2", 
-     main = "Actual vs Predicted")
+#Regular Plots
+plot(nthqrt, concentration, type="l", xlab="Time (years)", 
+     ylab="CO2 Concentration (ppm)", 
+     main = "Australia Seasonal Actual vs Predicted")
 lines(nthqrt, predct_response, col=2)
 legend("topleft" ,legend=c("Actual", "Predicted"),
        col=c("black", "red"), lty=1:2, cex=0.8)
@@ -143,7 +144,7 @@ legend("bottomright", bty="n",
 ggplot(Australia_Seasonal, aes(nthqrt, concentration)) +
   geom_line() +
   ggtitle("Australia Carbon Dioxide Seasonal Trend ") +
-  labs(x="Time", y="Carbon Dioxide Concentration")
+  labs(x="Time", y="CO2 Concentration (ppm)")
 
 
 # analysis
@@ -211,12 +212,16 @@ par(mfrow=c(1,1))
 
 # plot concentrations against nthqrt
 # Global data
-plot(Global_Seasonal$nthqrt,Global_Seasonal$concentration, type = "l", xlab = "Time in Quarter", ylab = "Carbon Dioxide Concentration")
+plot(Global_Seasonal$nthqrt,Global_Seasonal$concentration, 
+     main = "Averaged data with Australian & Hawaiian data" ,
+     type = "l", xlab = "Time (years)", ylab = "CO2 Concentration (ppm)")
 # Hawaii seasonal data
 lines(Hawaii_Seasonal$nthqrt, Hawaii_Seasonal$concentration, col = 2)
 # Australia seasonal data
 lines(Australia_Seasonal$nthqrt, Australia_Seasonal$concentration, col = 3)
-#Create Legend and title
+#Create Legend
+legend("topleft" ,legend=c("Average", "Hawaiian", "Australian"),
+       col=c("black", "red", "green"), lty=1:2, cex=0.8)
 
 # Result
 # Distribution of global data is in the middle of Hawaii and Australia
@@ -276,6 +281,7 @@ press.li = sum(linear.pr^2) # 824.2134
 quadratic.pr = residuals(quadratic_trend)/(1-hatvalues(quadratic_trend))
 press.qua = sum(quadratic.pr^2) # 63.60526
 
+#will need to do this manually as you are calculating log values
 exp.pr = residuals(exponential_trend)/(1-hatvalues(exponential_trend))
 press.exp = sum(exp.pr^2) # 0.002999889  ->  probably something went wrong
 
@@ -299,7 +305,7 @@ global1.exp.pr = predict(global1.exp, newdata=Global2)
 sqrt(mean((Global2$concentration-global1.qua.pr)^2)) # 0.6325
 
 sqrt(mean((exp(Global2$logconcentration)-exp(global1.exp.pr))^2)) # 1.513783
-
+detach(Global1)
 
 ################## Long Term Model #######################
 #### Hawaii Data ####
