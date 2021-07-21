@@ -54,6 +54,39 @@ ggplot(Hawaii_Seasonal, aes(yeardec, concentration)) +
   ggtitle("Hawaii Carbon Dioxide Seasonal Trend ") +
   labs(x="Time", y="CO2 Concentration (ppm)") #units
 
+#sensitivity analysis
+#a lot of error, and I do not know why the robustness value is sooooooo high
+#install.packages("sensemakr")
+library(sensemakr)
+
+Hawaii_sense_model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, data = Hawaii_Seasonal)
+Hawaiisummer_model.sensitivity<-sensemakr(
+  model=Hawaii_sense_model,
+  treatment="nthqrt",
+  benchmark_covariates = "summer",
+  kd=0.6
+)
+plot(Hawaiisummer_model.sensitivity)
+ovb_minimal_reporting(Hawaiisummer_model.sensitivity, format = "latex")#the  robustness value is too high here
+
+Hawaiiautumn_model.sensitivity<-sensemakr(
+  model=Hawaii_model,
+  treatment="nthqrt",
+  benchmark_covariates = "autumn",
+  kd=1:3
+)
+plot(Hawaiiautumn_model.sensitivity)
+ovb_minimal_reporting(Hawaiiautumn_model.sensitivity, format = "latex")#these reports show the same result
+
+Hawaiispring_model.sensitivity<-sensemakr(
+  model=Hawaii_model,
+  treatment="nthqrt",
+  benchmark_covariates = "spring",
+  kd=0.8
+)
+plot(Hawaiispring_model.sensitivity)
+ovb_minimal_reporting(Hawaiispring_model.sensitivity, format = "latex")
+#the confounders influenced results in a large extent
 
 # analysis
 index = sample(1:252, size=150)
