@@ -1,4 +1,4 @@
-year	month	decimal_date	average	sd	unknown
+year	month	decimal_date	average	sd	indicator
 1976	5	1976.3689	328.861	0.165	5
 1976	6	1976.4536	328.988	0.285	6
 1976	7	1976.5355	329.653	0.282	7
