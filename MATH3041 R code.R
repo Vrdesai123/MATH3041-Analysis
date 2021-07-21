@@ -216,6 +216,7 @@ plot(Global_Seasonal$nthqrt,Global_Seasonal$concentration, type = "l", xlab = "T
 lines(Hawaii_Seasonal$nthqrt, Hawaii_Seasonal$concentration, col = 2)
 # Australia seasonal data
 lines(Australia_Seasonal$nthqrt, Australia_Seasonal$concentration, col = 3)
+#Create Legend and title
 
 # Result
 # Distribution of global data is in the middle of Hawaii and Australia
@@ -297,13 +298,12 @@ global1.exp.pr = predict(global1.exp, newdata=Global2)
 
 sqrt(mean((Global2$concentration-global1.qua.pr)^2)) # 0.6325
 
-sqrt(mean((Global2$logconcentration-global1.exp.pr)^2)) # 0.0043  ->  DON'T UNDERSTAND
-
+sqrt(mean((exp(Global2$logconcentration)-exp(global1.exp.pr))^2)) # 1.513783
 
 
 ################## Long Term Model #######################
 #### Hawaii Data ####
-Hawaii_LT_Data = read.table("long_term_data.txt", header = T)
+Hawaii_LT_Data = read.table("Hawaii_long_term_data.txt", header = T)
 attach(Hawaii_LT_Data)
 
 LT_model = lm(average~indicator+I(indicator^2)+
@@ -336,8 +336,10 @@ Hawaii_LT_Data1.lm = lm(average~indicator+I(indicator^2)+
 Hawaii_LT_Data1.lm.pr = predict(Hawaii_LT_Data1.lm, newdata = Hawaii_LT_Data2)
 
 # mean square error #incorrect currently
-mse <- function(lmsum) 
-  mean(summary(global_seasonal1.lm)$residuals^2)
+mse <- function(lmsum){ 
+  mean(summary(lmsum)$residuals^2)
+}
 
+mse(global1.exp)
 detach(Hawaii_LT_Data1)
 
