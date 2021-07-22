@@ -341,44 +341,115 @@ par(mfrow=c(1,1))
 
 
 ################## Long Term Model #######################
-#### Hawaii Data ####
 Hawaii_LT_Data = read.table("Hawaii_long_term_data.txt", header = T)
-attach(Hawaii_LT_Data)
+Aus_LT_Data = read.table("Aus_long_term_data.txt", header = T)
+Hawaii_LT_Data$indicator = Hawaii_LT_Data$indicator - 216
+LT_Data = merge.data.frame(Hawaii_LT_Data, Aus_LT_Data, by = "indicator" )
+LT_Data$concentration = (LT_Data$average.x+LT_Data$average.y)/2
+attach(LT_Data)
+#### Analysis ####
 
-LT_model = lm(average~indicator+I(indicator^2)+
+
+LT_model = lm(concentration~indicator+I(indicator^2)+
                 sin((pi/6)*indicator)+cos((pi/6)*indicator)
-              , data = Hawaii_LT_Data)
+              , data = LT_Data)
 summary(LT_model)
 
 #Fit Data
-predct_response_LT = predict(LT_model, newdata = Hawaii_LT_Data) 
+predct_response_LT = predict(LT_model, newdata = LT_Data) 
 
 #Actual vs Predicted graph on Hawaii
-plot(indicator, average, type="l", xlab="Time", ylab="Concentrations",
+plot(indicator, concentration, type="l", xlab="Time", ylab="Concentrations",
      main = "LT Actual vs Predicted")
 lines(indicator, predct_response_LT, col=2)
 legend("topleft" ,legend=c("Actual", "Predicted"),
        col=c("black", "red"), lty=1:2, cex=0.8)
 legend("bottomright", bty="n", 
        legend=paste("Adj R2 is", format(summary(LT_model)$adj.r.squared, digits=4)))
-detach(Hawaii_LT_Data)
+detach(LT_Data)
 
-# Analysis
-index = sample(1:176, 88)
-Hawaii_LT_Data1 = Hawaii_LT_Data[index,]
-Hawaii_LT_Data2 = Hawaii_LT_Data[-index,]
-attach(Hawaii_LT_Data1)
+# Analysis # Make this a function
+mse_sim = function(df,n){
+  index = sample(1:nrow(df), n)
+  LT_Data1 = df[index,]
+  LT_Data2 = df[-index,]
+  attach(LT_Data1)
+  
+  #Full Model
+  LT_Data1.lm = lm(concentration~indicator+I(indicator^2)+
+                     sin((pi/6)*indicator)+cos((pi/6)*indicator)
+                   , data = LT_Data1)
+  LT_Data1.lm.pr = predict(LT_Data1.lm, newdata = LT_Data2)
+  
+  
+  #Model Without Trig
+  
+  LT_Data1.poly = lm(concentration~indicator+I(indicator^2)
+                     , data = LT_Data1)
+  LT_Data1.poly.pr = predict(LT_Data1.poly, newdata = LT_Data2)
+  
+  #Model Without quadratic
+  
+  LT_Data1.lin = lm(concentration~indicator+
+                      sin((pi/6)*indicator)+cos((pi/6)*indicator)
+                    , data = LT_Data1)
+  LT_Data1.lin.pr = predict(LT_Data1.lin, newdata = LT_Data2)
+  
+  a = mean((LT_Data2$concentration-LT_Data1.lm.pr)^2)#MSE Full
+  b = mean((LT_Data2$concentration-LT_Data1.poly.pr)^2)#MSE Poly
+  c = mean((LT_Data2$concentration-LT_Data1.lin.pr)^2)#MSE Lin + Trig
+  detach(LT_Data1)
+  mylist = list(a,b,c,
+                LT_Data1.lm.pr,
+                LT_Data1.poly.pr,
+                LT_Data1.lin.pr,
+                LT_Data2)
+  names(mylist) = c("MSE_FUll", "MSE_POLY", "MSE_LIN",
+                    "Full_Predict", "Poly_Predict", "Lin_Predict",
+                    "Dataset")
+  return(mylist)
+}
 
-Hawaii_LT_Data1.lm = lm(average~indicator+I(indicator^2)+
-                          sin((pi/6)*indicator)+cos((pi/6)*indicator)
-                        , data = Hawaii_LT_Data1)
-Hawaii_LT_Data1.lm.pr = predict(Hawaii_LT_Data1.lm, newdata = Hawaii_LT_Data2)
+MSE_FUll = c()
+MSE_POLY = c()
+MSE_LIN = c()
+
+number_of_sims = 50
+No_fit = 50
+i=1
+while (i <= number_of_sims){
+Sim = mse_sim(LT_Data, No_fit)
+
+MSE_FUll[i] = Sim$MSE_FUll
+MSE_POLY[i] = Sim$MSE_POLY
+MSE_LIN[i] = Sim$MSE_LIN
+i = i + 1
+  }
+
+
+
+attach(Sim$Dataset)
+plot(indicator, concentration, type="l", xlab="Time", ylab="Concentrations",
+     main = "LT Actual vs Predicted",
+     xlim = c(300, max(indicator)),
+     ylim = c(360, max(concentration)))
+lines(indicator, Sim$Full_Predict, col=2)
+lines(indicator, Sim$Poly_Predict, col=3)
+lines(indicator, Sim$Lin_Predict, col=4)
+legend("topleft" ,legend=c("Actual", "Full Model", "Quadratic", "Linear + Poly"),
+       col=c("black", "red", "green", "blue"), lty=1:2, cex=0.8)
+
+
+legend("bottomright", bty="n", 
+       legend=paste("Adj R2 is", format(summary(LT_model)$adj.r.squared, digits=4)))
+
+detach(Sim$Dataset)
+
+mean(MSE_FUll)
+mean(MSE_POLY)
+mean(MSE_LIN)
 
 # mean square error #incorrect currently
 mse <- function(lmsum){ 
   mean(summary(lmsum)$residuals^2)
 }
-
-mse(global1.exp)
-detach(Hawaii_LT_Data1)
-
