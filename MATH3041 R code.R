@@ -35,7 +35,7 @@ legend("bottomright" ,legend=c("Summer", "Autumn", "Winter", "Spring"),
 
 ##### Seasonal Model #####
 
-Hawaii_model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, data = Hawaii_Seasonal)
+Hawaii_model = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Hawaii_Seasonal)
 summary(Hawaii_model)
 
 predct_response = predict(Hawaii_model, newdata = Hawaii_Seasonal)
@@ -110,23 +110,6 @@ sqrt(mean((Hawaii_Seasonal2$concentration-Hawaii_Seasonal1.lm.pr)^2))
 #Linear
 sqrt(mean((Hawaii_Seasonal2$concentration-Hawaii_Seasonal1.li.pr)^2))
 
-
-
-# Estimation of coefficients
-detach(Hawaii_Seasonal1)
-Hawaii_Seasonal_8sample = Hawaii_Seasonal[sample(nrow(Hawaii_Seasonal), 8), ]
-attach(Hawaii_Seasonal_8sample)
-col0 = rep(c(1), each=8)
-col1 = c(nthqrt)
-col2 = c(nthqrtsqr)
-col3 = c(0,0,1,1,0,0,0,0)
-col4 = c(0,0,0,0,1,1,0,0)
-col5 = c(0,0,0,0,0,0,1,1)
-
-x = cbind(col0, col1, col2, col3, col4, col5)
-y = c(concentration)
-solve(t(x) %*% x) %*% t(x) %*% y
-detach(Hawaii_Seasonal_8sample)
 
 
 ####################### Australia Section #######################
@@ -204,24 +187,6 @@ sqrt(mean((Australia_Seasonal2$concentration-Australia_Seasonal1.li.pr)^2))
 
 
 
-# Estimation of coefficients
-detach(Australia_Seasonal1)
-Australia_Seasonal_8sample = Australia_Seasonal[sample(nrow(Australia_Seasonal), 8), ]
-attach(Australia_Seasonal_8sample)
-col0 = rep(c(1), each=8)
-col1 = c(nthqrt)
-col2 = c(nthqrtsqr)
-col3 = c(0,0,1,1,0,0,0,0)
-col4 = c(0,0,0,0,1,1,0,0)
-col5 = c(0,0,0,0,0,0,1,1)
-
-x = cbind(col0, col1, col2, col3, col4, col5)
-y = c(concentration)
-solve(t(x) %*% x) %*% t(x) %*% y
-detach(Australia_Seasonal_8sample)
-
-
-
 ################## Global Section #######################
 Global_Seasonal = read.table("combined_seasonal_data.txt", header = T)
 #attach(global_seasonal)
@@ -239,6 +204,8 @@ par(mfrow=c(1,1))
 # Normal Q-Q plot shows that normality assumption is hold?
 # Scale-Location shows that no.1,46,52 are potentially considered as outliers
 
+library(car)
+vif(global_model)
 
 # predict_response = predict(global_model, newdata = global_seasonal)
 # lines(global_seasonal$nthqrt, predict_response, col=2)
@@ -293,50 +260,38 @@ sqrt(mean((Global2$concentration-global1.qua.pr)^2)) # 0.6518892
 sqrt(mean((exp(Global2$logconcentration)-exp(global1.exp.pr))^2)) # 1.515733
 detach(Global1)
 
-# I don't think PRESS and CVC is useful anymore, cuz we've already used MSE to measure the predictive performance
-# PRESS Statistic (smaller is better)
-# pr = residuals(global_model)/(1-hatvalues(global_model))
-# PRESS = sum(pr^2) # PRESS = 63.60526
 
 
-# CVC: select smallest one
-# install.packages("cvTools")
-# library(cvTools)
-# CVC = cvFit(global_model, data = Global_Seasonal, y=Global_Seasonal$concentration, K=5, seed=1)
-# CVC$cv # 0.6146834
-# We can do the CVC test for different model and then do the selection
-
-
-
-
+# I DON'T THINK WE HAVE ENOUGH SPACE FOR THIS PART, SO I DECIDE TO EXCLUDE THIS PART
 # Checking for influential observation, interpretation is in MATH2831 Wk8 Slide.33
-influence.measures(global_model) # no.1,3,4,46,47,52,.... (have a high leverage)
+# options(max.print=999999)
+# influence.measures(global_model) # no.1,3,4,46,47,52,.... (have a high leverage)
 
 # if we refit the model after the removal of influential 
 # observations (haven't removed all the influential observations since full
 # results cannot display on the screen)
-global_model2 = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Global_Seasonal[-c(1,3,4,46,47,52),])
-summary(global_model2)
+# global_model2 = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Global_Seasonal[-c(1,3,4,46,47,52),])
+# summary(global_model2)
 
 # Compare the fitted value of nthqrt = 21.25
-newdata = data.frame(nthqrt = 21.25, spring = 0, summer = 1, autumn = 0)
+# newdata = data.frame(nthqrt = 21.25, spring = 0, summer = 1, autumn = 0)
 
 # model with full observations
-predict(global_model, newdata, interval = "confidence")
-predict(global_model, newdata, interval = "prediction")
+# predict(global_model, newdata, interval = "confidence")
+# predict(global_model, newdata, interval = "prediction")
 
 # model with some influential observations removed
-predict(global_model2, newdata, interval = "confidence")
-predict(global_model2, newdata, interval = "prediction")
+# predict(global_model2, newdata, interval = "confidence")
+# predict(global_model2, newdata, interval = "prediction")
 
 # Result: both the CI for the mean response and the PI have reduced in size,
 # but not much. This is probably because the goodness-of-fit of the orginial
 # model has already been super high.
 
 # diagnostic plot
-par(mfrow=c(2,2))
-plot(global_model2)
-par(mfrow=c(1,1))
+# par(mfrow=c(2,2))
+# plot(global_model2)
+# par(mfrow=c(1,1))
 
 
 
