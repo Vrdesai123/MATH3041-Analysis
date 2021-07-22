@@ -449,7 +449,7 @@ i = i + 1
 
 
 attach(Sim$Dataset)
-plot(indicator, concentration, type="l", xlab="Time", ylab="Concentrations",
+plot(indicator, concentration, type="l", xlab="Time (months)", ylab="CO2 Concentration (ppm)",
      main = "LT Actual vs Predicted",
      xlim = c(300, max(indicator)),
      ylim = c(360, max(concentration)))
@@ -469,7 +469,7 @@ mean(MSE_LIN)
 #mean(MSE_QUAD)
 
 #install.packages("car")
-car::vif(LT_model)
+table(car::vif(LT_model))
 car::vif(global_model2)
 
 # mean square error
