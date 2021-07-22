@@ -354,21 +354,30 @@ LT_model = lm(concentration~indicator+I(indicator^2)+
                 sin((pi/6)*indicator)+cos((pi/6)*indicator)
               , data = LT_Data)
 summary(LT_model)
-
-#Fit Data
-predct_response_LT = predict(LT_model, newdata = LT_Data) 
-
-#Actual vs Predicted graph on Hawaii
-plot(indicator, concentration, type="l", xlab="Time", ylab="Concentrations",
-     main = "LT Actual vs Predicted")
-lines(indicator, predct_response_LT, col=2)
-legend("topleft" ,legend=c("Actual", "Predicted"),
-       col=c("black", "red"), lty=1:2, cex=0.8)
-legend("bottomright", bty="n", 
-       legend=paste("Adj R2 is", format(summary(LT_model)$adj.r.squared, digits=4)))
 detach(LT_Data)
 
-# Analysis # Make this a function
+#Graphs
+Graph_fit = function(df, title){
+  attach(df)
+  #Fit Data
+  predct_response_LT = predict(LT_model, newdata = df) 
+  R2 = cor(average, predct_response_LT)^2
+  
+  #Actual vs Predicted graph on Hawaii
+  plot(indicator, average, type="l", xlab="Time", ylab="Concentrations",
+       main = paste(title, "LT Actual vs Predicted"))
+  lines(indicator, predct_response_LT, col=2)
+  legend("topleft" ,legend=c("Actual", "Predicted"),
+         col=c("black", "red"), lty=1:2, cex=0.8)
+  legend("bottomright", bty="n", 
+         legend=paste("Adj R2 is", format(R2, digits=4)))
+  detach(df)
+}
+
+Graph_fit(Hawaii_LT_Data, "Mona Loa")
+Graph_fit(Aus_LT_Data, "Cape Grim")
+
+# Analysis
 mse_sim = function(df,n){
   index = sample(1:nrow(df), n)
   LT_Data1 = df[index,]
@@ -395,17 +404,26 @@ mse_sim = function(df,n){
                     , data = LT_Data1)
   LT_Data1.lin.pr = predict(LT_Data1.lin, newdata = LT_Data2)
   
+  #Quad Model
+  LT_Data1.quad = lm(concentration~I(indicator^2)+
+                     sin((pi/6)*indicator)+cos((pi/6)*indicator)
+                   , data = LT_Data1)
+  LT_Data1.quad.pr = predict(LT_Data1.quad, newdata = LT_Data2)
+  
   a = mean((LT_Data2$concentration-LT_Data1.lm.pr)^2)#MSE Full
   b = mean((LT_Data2$concentration-LT_Data1.poly.pr)^2)#MSE Poly
   c = mean((LT_Data2$concentration-LT_Data1.lin.pr)^2)#MSE Lin + Trig
+  d = mean((LT_Data2$concentration-LT_Data1.quad.pr)^2)#MSE Quad
   detach(LT_Data1)
-  mylist = list(a,b,c,
+  mylist = list(a,b,c,d,
                 LT_Data1.lm.pr,
                 LT_Data1.poly.pr,
                 LT_Data1.lin.pr,
+                LT_Data1.quad.pr,
                 LT_Data2)
-  names(mylist) = c("MSE_FUll", "MSE_POLY", "MSE_LIN",
-                    "Full_Predict", "Poly_Predict", "Lin_Predict",
+  names(mylist) = c("MSE_FUll", "MSE_POLY", "MSE_LIN", "MSE_QUAD",
+                    "Full_Predict", "Poly_Predict", "Lin_Predict", 
+                    "Quad_Predict",
                     "Dataset")
   return(mylist)
 }
@@ -413,6 +431,7 @@ mse_sim = function(df,n){
 MSE_FUll = c()
 MSE_POLY = c()
 MSE_LIN = c()
+MSE_QUAD = c()
 
 number_of_sims = 50
 No_fit = 50
@@ -423,6 +442,7 @@ Sim = mse_sim(LT_Data, No_fit)
 MSE_FUll[i] = Sim$MSE_FUll
 MSE_POLY[i] = Sim$MSE_POLY
 MSE_LIN[i] = Sim$MSE_LIN
+MSE_QUAD[i] = Sim$MSE_QUAD
 i = i + 1
   }
 
@@ -436,16 +456,23 @@ plot(indicator, concentration, type="l", xlab="Time", ylab="Concentrations",
 lines(indicator, Sim$Full_Predict, col=2)
 lines(indicator, Sim$Poly_Predict, col=3)
 lines(indicator, Sim$Lin_Predict, col=4)
+#lines(indicator, Sim$Quad_Predict, col=5)
 legend("topleft" ,legend=c("Actual", "Full Model", "Quadratic", "Linear + Poly"),
-       col=c("black", "red", "green", "blue"), lty=1:2, cex=0.8)
-
+       col=c("black", "red", "green", "deepskyblue"), lty=1:2, cex=0.8)
+#legend("topleft" ,legend=c("Actual", "Full Model", "Quadratic", "Linear + Poly", "Quad"),
+       #=c("black", "red", "green", "deepskyblue", "cadetblue1"), lty=1:2, cex=0.8)
 detach(Sim$Dataset)
 
 mean(MSE_FUll)
 mean(MSE_POLY)
 mean(MSE_LIN)
+#mean(MSE_QUAD)
 
-# mean square error #incorrect currently
+#install.packages("car")
+car::vif(LT_model)
+car::vif(global_model2)
+
+# mean square error
 mse <- function(lmsum){ 
   mean(summary(lmsum)$residuals^2)
 }
