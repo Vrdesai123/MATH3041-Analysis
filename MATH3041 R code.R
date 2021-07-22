@@ -439,10 +439,6 @@ lines(indicator, Sim$Lin_Predict, col=4)
 legend("topleft" ,legend=c("Actual", "Full Model", "Quadratic", "Linear + Poly"),
        col=c("black", "red", "green", "blue"), lty=1:2, cex=0.8)
 
-
-legend("bottomright", bty="n", 
-       legend=paste("Adj R2 is", format(summary(LT_model)$adj.r.squared, digits=4)))
-
 detach(Sim$Dataset)
 
 mean(MSE_FUll)
