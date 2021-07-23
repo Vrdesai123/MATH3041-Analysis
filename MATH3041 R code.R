@@ -35,7 +35,7 @@ legend("bottomright" ,legend=c("Summer", "Autumn", "Winter", "Spring"),
 
 ##### Seasonal Model #####
 
-Hawaii_model = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Hawaii_Seasonal)
+Hawaii_model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Hawaii_Seasonal)
 summary(Hawaii_model)
 
 predct_response = predict(Hawaii_model, newdata = Hawaii_Seasonal)
@@ -59,7 +59,7 @@ ggplot(Hawaii_Seasonal, aes(yeardec, concentration)) +
 #install.packages("sensemakr")
 library(sensemakr)
 
-Hawaii_sense_model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, data = Hawaii_Seasonal)
+Hawaii_sense_model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Hawaii_Seasonal)
 Hawaiisummer_model.sensitivity<-sensemakr(
   model=Hawaii_sense_model,
   treatment="nthqrt",
@@ -97,11 +97,11 @@ attach(Hawaii_Seasonal1)
 
 # linear trend does not work well
 #Quadratic
-Hawaii_Seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, data = Hawaii_Seasonal1)
+Hawaii_Seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Hawaii_Seasonal1)
 Hawaii_Seasonal1.lm.pr = predict(Hawaii_Seasonal1.lm, newdata = Hawaii_Seasonal2)
 
 #Non Quadratic
-Hawaii_Seasonal1.li = lm(concentration~nthqrt+summer+autumn+spring, data = Hawaii_Seasonal1)
+Hawaii_Seasonal1.li = lm(concentration~nthqrt+summer+autumn+winter, data = Hawaii_Seasonal1)
 Hawaii_Seasonal1.li.pr = predict(Hawaii_Seasonal1.li, newdata = Hawaii_Seasonal2)
 
 # mean square error?
@@ -141,7 +141,7 @@ legend("bottomright" ,legend=c("Summer", "Autumn", "Winter", "Spring"),
        col=c("black", "red", "green", "blue"), lty=1:2, cex=0.8)
 
 ##### Seasonal Model #####
-AUS_model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, 
+AUS_model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, 
            data = Australia_Seasonal)
 summary(AUS_model)
 
@@ -172,11 +172,11 @@ attach(Australia_Seasonal1)
 
 # linear trend does not work well
 #Quadratic
-Australia_Seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+spring, data = Australia_Seasonal1)
+Australia_Seasonal1.lm = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Australia_Seasonal1)
 Australia_Seasonal1.lm.pr = predict(Australia_Seasonal1.lm, newdata = Australia_Seasonal2)
 
 #Non Quadratic
-Australia_Seasonal1.li = lm(concentration~nthqrt+summer+autumn+spring, data = Australia_Seasonal1)
+Australia_Seasonal1.li = lm(concentration~nthqrt+summer+autumn+winter, data = Australia_Seasonal1)
 Australia_Seasonal1.li.pr = predict(Australia_Seasonal1.li, newdata = Australia_Seasonal2)
 
 # mean square error?
@@ -192,7 +192,7 @@ Global_Seasonal = read.table("combined_seasonal_data.txt", header = T)
 #attach(global_seasonal)
 
 
-global_model = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Global_Seasonal)
+global_model = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Global_Seasonal)
 # global_model$fitted.values
 summary(global_model)
 
@@ -228,15 +228,9 @@ legend("topleft" ,legend=c("Average", "Hawaiian", "Australian"),
 
 
 # Analysis: Model Selection (linear, quadratic and exponential trend)
-linear_trend = lm(concentration~nthqrt+spring+summer+autumn, data = Global_Seasonal)
-quadratic_trend = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Global_Seasonal)
-exponential_trend = lm(log(concentration)~nthqrt+spring+summer+autumn, data = Global_Seasonal)
-
-# linear.pr = residuals(linear_trend)/(1-hatvalues(linear_trend))
-# press.li = sum(linear.pr^2) # 824.2134
-
-# quadratic.pr = residuals(quadratic_trend)/(1-hatvalues(quadratic_trend))
-# press.qua = sum(quadratic.pr^2) # 63.60526
+linear_trend = lm(concentration~nthqrt+summer+autumn+winter, data = Global_Seasonal)
+quadratic_trend = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Global_Seasonal)
+exponential_trend = lm(log(concentration)~nthqrt+summer+autumn+winter, data = Global_Seasonal)
 
 
 index = sample(1:176, size = 88)
@@ -247,9 +241,9 @@ Global2$logconcentration = log(concentration)
 detach(Global2)
 attach(Global1)
 
-global1.li = lm(concentration~nthqrt+spring+summer+autumn, data = Global1)
-global1.qua = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Global1)
-global1.exp = lm(log(concentration)~nthqrt+spring+summer+autumn, data = Global1)
+global1.li = lm(concentration~nthqrt+summer+autumn+winter, data = Global1)
+global1.qua = lm(concentration~nthqrt+I(nthqrt^2)+summer+autumn+winter, data = Global1)
+global1.exp = lm(log(concentration)~nthqrt+summer+autumn+winter, data = Global1)
 
 global1.li.pr = predict(global1.li, newdata=Global2)
 global1.qua.pr = predict(global1.qua, newdata=Global2)
@@ -259,40 +253,6 @@ sqrt(mean((Global2$concentration-global1.li.pr)^2)) # 2.085027
 sqrt(mean((Global2$concentration-global1.qua.pr)^2)) # 0.6518892
 sqrt(mean((exp(Global2$logconcentration)-exp(global1.exp.pr))^2)) # 1.515733
 detach(Global1)
-
-
-
-# I DON'T THINK WE HAVE ENOUGH SPACE FOR THIS PART, SO I DECIDE TO EXCLUDE THIS PART
-# Checking for influential observation, interpretation is in MATH2831 Wk8 Slide.33
-# options(max.print=999999)
-# influence.measures(global_model) # no.1,3,4,46,47,52,.... (have a high leverage)
-
-# if we refit the model after the removal of influential 
-# observations (haven't removed all the influential observations since full
-# results cannot display on the screen)
-# global_model2 = lm(concentration~nthqrt+I(nthqrt^2)+spring+summer+autumn, data = Global_Seasonal[-c(1,3,4,46,47,52),])
-# summary(global_model2)
-
-# Compare the fitted value of nthqrt = 21.25
-# newdata = data.frame(nthqrt = 21.25, spring = 0, summer = 1, autumn = 0)
-
-# model with full observations
-# predict(global_model, newdata, interval = "confidence")
-# predict(global_model, newdata, interval = "prediction")
-
-# model with some influential observations removed
-# predict(global_model2, newdata, interval = "confidence")
-# predict(global_model2, newdata, interval = "prediction")
-
-# Result: both the CI for the mean response and the PI have reduced in size,
-# but not much. This is probably because the goodness-of-fit of the orginial
-# model has already been super high.
-
-# diagnostic plot
-# par(mfrow=c(2,2))
-# plot(global_model2)
-# par(mfrow=c(1,1))
-
 
 
 ################## Long Term Model #######################
