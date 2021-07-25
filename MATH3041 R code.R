@@ -110,7 +110,7 @@ sqrt(mean((Hawaii_Seasonal2$concentration-Hawaii_Seasonal1.lm.pr)^2))
 #Linear
 sqrt(mean((Hawaii_Seasonal2$concentration-Hawaii_Seasonal1.li.pr)^2))
 
-
+detach(Hawaii_Seasonal1)
 
 ####################### Australia Section #######################
 #Australia Data
@@ -185,7 +185,7 @@ sqrt(mean((Australia_Seasonal2$concentration-Australia_Seasonal1.lm.pr)^2))
 #Linear
 sqrt(mean((Australia_Seasonal2$concentration-Australia_Seasonal1.li.pr)^2))
 
-
+detach(Australia_Seasonal1)
 
 ################## Global Section #######################
 Global_Seasonal = read.table("combined_seasonal_data.txt", header = T)
@@ -272,14 +272,14 @@ summary(LT_model)
 detach(LT_Data)
 
 #Graphs
-Graph_fit = function(df, title){
+Graph_fit = function(df, model, title){
   attach(df)
   #Fit Data
-  predct_response_LT = predict(LT_model, newdata = df) 
+  predct_response_LT = predict(model, newdata = df) 
   R2 = cor(average, predct_response_LT)^2
   
   #Actual vs Predicted graph on Hawaii
-  plot(indicator, average, type="l", xlab="Time", ylab="Concentrations",
+  plot(indicator, average, type="l", xlab="Time", ylab="CO2 Concentration (ppm)",
        main = paste(title, "LT Actual vs Predicted"))
   lines(indicator, predct_response_LT, col=2)
   legend("topleft" ,legend=c("Actual", "Predicted"),
@@ -289,8 +289,8 @@ Graph_fit = function(df, title){
   detach(df)
 }
 
-Graph_fit(Hawaii_LT_Data, "Mona Loa")
-Graph_fit(Aus_LT_Data, "Cape Grim")
+Graph_fit(Hawaii_LT_Data, LT_model,"Mona Loa")
+Graph_fit(Aus_LT_Data, LT_model,"Cape Grim")
 
 # Analysis
 mse_sim = function(df,n){
@@ -376,18 +376,136 @@ legend("topleft" ,legend=c("Actual", "Full Model", "Quadratic", "Linear + Poly")
        col=c("black", "red", "green", "deepskyblue"), lty=1:2, cex=0.8)
 #legend("topleft" ,legend=c("Actual", "Full Model", "Quadratic", "Linear + Poly", "Quad"),
        #=c("black", "red", "green", "deepskyblue", "cadetblue1"), lty=1:2, cex=0.8)
-detach(Sim$Dataset)
 
-mean(MSE_FUll)
-mean(MSE_POLY)
-mean(MSE_LIN)
+detach(Sim$Dataset)
+a = sqrt(mean(MSE_FUll))
+b = sqrt(mean(MSE_POLY))
+c = sqrt(mean(MSE_LIN))
+
+1-(a^2/var(Sim$Dataset$concentration))
+1-(b^2/var(Sim$Dataset$concentration))
+1-(c^2/var(Sim$Dataset$concentration))
 #mean(MSE_QUAD)
+
+
 
 #install.packages("car")
 table(car::vif(LT_model))
-car::vif(global_model2)
+
 
 # mean square error
 mse <- function(lmsum){ 
   mean(summary(lmsum)$residuals^2)
 }
+
+#### Diagnosis ####
+# diagnostic plot
+par(mfrow=c(2,2))
+plot(LT_model) #5,10,147
+par(mfrow=c(1,1))
+
+Trim = c(5,10,147)
+LT_Data_Trim = LT_Data[-Trim,]
+
+
+LT_model_Trim = lm(concentration~indicator+I(indicator^2)+
+                sin((pi/6)*indicator)+cos((pi/6)*indicator)
+              , data = LT_Data_Trim)
+summary(LT_model)
+summary(LT_model_Trim)
+plot(LT_model_Trim)
+
+
+
+
+#### Sequential Analysis ####
+mse_sim_2 = function(df,n){
+  index = c(1:n)
+  LT_Data1 = df[index,]
+  LT_Data2 = df[-index,]
+  attach(LT_Data1)
+  
+  #Full Model
+  LT_Data1.lm = lm(concentration~indicator+I(indicator^2)+
+                     sin((pi/6)*indicator)+cos((pi/6)*indicator)
+                   , data = LT_Data1)
+  LT_Data1.lm.pr = predict(LT_Data1.lm, newdata = LT_Data2)
+  
+  
+  #Model Without Trig
+  
+  LT_Data1.poly = lm(concentration~indicator+I(indicator^2)
+                     , data = LT_Data1)
+  LT_Data1.poly.pr = predict(LT_Data1.poly, newdata = LT_Data2)
+  
+  #Model Without quadratic
+  
+  LT_Data1.lin = lm(concentration~indicator+
+                      sin((pi/6)*indicator)+cos((pi/6)*indicator)
+                    , data = LT_Data1)
+  LT_Data1.lin.pr = predict(LT_Data1.lin, newdata = LT_Data2)
+  
+  #Quad Model
+  LT_Data1.quad = lm(concentration~I(indicator^2)+
+                       sin((pi/6)*indicator)+cos((pi/6)*indicator)
+                     , data = LT_Data1)
+  LT_Data1.quad.pr = predict(LT_Data1.quad, newdata = LT_Data2)
+  
+  a = mean((LT_Data2$concentration-LT_Data1.lm.pr)^2)#MSE Full
+  b = mean((LT_Data2$concentration-LT_Data1.poly.pr)^2)#MSE Poly
+  c = mean((LT_Data2$concentration-LT_Data1.lin.pr)^2)#MSE Lin + Trig
+  d = mean((LT_Data2$concentration-LT_Data1.quad.pr)^2)#MSE Quad
+  detach(LT_Data1)
+  mylist = list(a,b,c,d,
+                LT_Data1.lm.pr,
+                LT_Data1.poly.pr,
+                LT_Data1.lin.pr,
+                LT_Data1.quad.pr,
+                LT_Data2)
+  names(mylist) = c("MSE_FUll", "MSE_POLY", "MSE_LIN", "MSE_QUAD",
+                    "Full_Predict", "Poly_Predict", "Lin_Predict", 
+                    "Quad_Predict",
+                    "Dataset")
+  return(mylist)
+}
+
+MSE_FUll = c()
+MSE_POLY = c()
+MSE_LIN = c()
+MSE_QUAD = c()
+
+number_of_sims = 50
+No_fit = 200
+i=1
+while (i <= number_of_sims){
+  Sim2 = mse_sim_2(LT_Data, No_fit)
+  
+  MSE_FUll[i] = Sim2$MSE_FUll
+  MSE_POLY[i] = Sim2$MSE_POLY
+  MSE_LIN[i] = Sim2$MSE_LIN
+  MSE_QUAD[i] = Sim2$MSE_QUAD
+  i = i + 1
+}
+
+
+
+attach(Sim2$Dataset)
+plot(indicator, concentration, type="l", xlab="Time (months)", ylab="CO2 Concentration (ppm)",
+     main = "LT Actual vs Predicted")
+lines(indicator, Sim2$Full_Predict, col=2)
+lines(indicator, Sim2$Poly_Predict, col=3)
+lines(indicator, Sim2$Lin_Predict, col=4)
+#lines(indicator, Sim$Quad_Predict, col=5)
+legend("topleft" ,legend=c("Actual", "Full Model", "Quadratic", "Linear + Poly"),
+       col=c("black", "red", "green", "deepskyblue"), lty=1:2, cex=0.8)
+#legend("topleft" ,legend=c("Actual", "Full Model", "Quadratic", "Linear + Poly", "Quad"),
+#=c("black", "red", "green", "deepskyblue", "cadetblue1"), lty=1:2, cex=0.8)
+
+detach(Sim2$Dataset)
+d = sqrt(mean(MSE_FUll))
+e = sqrt(mean(MSE_POLY))
+f = sqrt(mean(MSE_LIN))
+
+1-(d^2/var(Sim2$Dataset$concentration))
+1-(e^2/var(Sim2$Dataset$concentration))
+1-(f^2/var(Sim2$Dataset$concentration))
