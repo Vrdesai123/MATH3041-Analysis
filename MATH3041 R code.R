@@ -415,8 +415,11 @@ summary(LT_model)
 summary(LT_model_Trim)
 plot(LT_model_Trim)
 
-
-
+#Coefficients
+dcose = LT_model$coefficients[4]
+dsine = LT_model$coefficients[5]
+e_coeff = atan(dsine/dcose)
+d_coeff = dcose/cos(e_coeff)
 
 #### Sequential Analysis ####
 mse_sim_2 = function(df,n){
